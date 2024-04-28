@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from torch.utils.checkpoint import checkpoint as torch_checkpoint
-from xformers import ops
+#from xformers import ops
 
 from .rope import RotaryEmbedding
 from .streaming import StreamingModule
@@ -175,6 +175,7 @@ class StreamingMultiheadAttention(StreamingModule):
         self.embed_dim = embed_dim
         self.causal = causal
         self.past_context = past_context
+        memory_efficient = False
         self.memory_efficient = memory_efficient
         self.attention_as_float32 = attention_as_float32
         self.rope = rope
@@ -487,6 +488,7 @@ class StreamingTransformerLayer(nn.TransformerEncoderLayer):
         super().__init__(d_model, num_heads, dim_feedforward, dropout,
                          device=device, dtype=dtype, batch_first=True, **kwargs)
         factory_kwargs = {'device': device, 'dtype': dtype}
+        memory_efficient = False
         # Redefine self_attn to our streaming multi-head attention
         attn_kwargs: tp.Dict[str, tp.Any] = {
             'embed_dim': d_model,
@@ -619,6 +621,8 @@ class StreamingTransformer(StreamingModule):
         self.positional_scale = positional_scale
         self.weight_decay = weight_decay
         self.lr = lr
+
+        memory_efficient = False
 
         assert positional_embedding in ['sin', 'rope', 'sin_rope']
         self.rope: tp.Optional[RotaryEmbedding] = None
